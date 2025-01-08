@@ -5,6 +5,7 @@ import { ErrorWithStatusCode } from "../types/custom/error";
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 import { jwtSecretKey } from "../utils/constants";
+import { userInfo } from "os";
 
 export const login = (
   req: Request<{}, {}, LoginBody>,
@@ -40,7 +41,14 @@ export const login = (
         jwtSecretKey,
         { expiresIn: rememberMe === true ? "7d" : "2h" }
       );
-      res.status(200).json({ token: token });
+      res
+        .status(200)
+        .json({
+          userId: userData.id,
+          userName: userData.username,
+          token: token,
+          rememberMe: rememberMe,
+        });
     })
     .catch((error) => {
       if (!error.statusCode) {
@@ -92,16 +100,20 @@ export const signup = (
       return user.addUser();
     })
     .then((result) => {
+      const userId = result.rows[0].id;
       const token = jwt.sign(
         {
-          userId: result.rows[0].id,
+          userId: userId,
         },
         jwtSecretKey,
         { expiresIn: "2h" }
       );
-      res
-        .status(201)
-        .json({ token: token, message: "User created succesfully." });
+      res.status(201).json({
+        token: token,
+        userId: userId,
+        userName: userName,
+        message: "User created succesfully.",
+      });
     })
     .catch((error) => {
       if (!error.statusCode) {
