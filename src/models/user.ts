@@ -12,8 +12,8 @@ export default class User {
   }
 
   addUser() {
-    return db.query(
-      "Insert into users (email, username ,password) values ($1, $2, $3)",
+    return db.query<{id: number}>(
+      "Insert into users (email, username ,password) values ($1, $2, $3) RETURNING id",
       [this.email, this.userName, this.hashedPassword]
     );
   }

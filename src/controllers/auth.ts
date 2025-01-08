@@ -1,5 +1,5 @@
 import User from "../models/user";
-import { LoginBody, User as UserBody } from "../types/api/user";
+import { LoginBody, SignUpBody } from "../types/api/user";
 import bcrypt from "bcryptjs";
 import { ErrorWithStatusCode } from "../types/custom/error";
 import jwt from "jsonwebtoken";
@@ -13,6 +13,7 @@ export const login = (
 ) => {
   const email = req.body.email;
   const password = req.body.password;
+  const rememberMe = req.body.rememberMe;
   let userData;
   User.getUserByEmail(email)
     .then((response) => {
@@ -37,7 +38,7 @@ export const login = (
           userId: userData.id,
         },
         jwtSecretKey,
-        { expiresIn: "2h" }
+        { expiresIn: rememberMe === true ? "7d" : "2h" }
       );
       res.status(200).json({ token: token });
     })
@@ -50,13 +51,19 @@ export const login = (
 };
 
 export const signup = (
-  req: Request<{}, {}, UserBody>,
+  req: Request<{}, {}, SignUpBody>,
   res: Response,
   next: NextFunction
 ) => {
   const email: string = req.body.email;
   const password: string = req.body.password;
   const userName: string = req.body.userName;
+
+  if (!email || !password || !userName) {
+    const error: ErrorWithStatusCode = new Error("All fields are required.");
+    error.statusCode = 400;
+    throw error;
+  }
 
   if (!email.includes("@") || !email.includes(".")) {
     const error: ErrorWithStatusCode = new Error("Invalid email");
@@ -85,7 +92,16 @@ export const signup = (
       return user.addUser();
     })
     .then((result) => {
-      res.status(201).json({ message: "User created succesfully." });
+      const token = jwt.sign(
+        {
+          userId: result.rows[0].id,
+        },
+        jwtSecretKey,
+        { expiresIn: "2h" }
+      );
+      res
+        .status(201)
+        .json({ token: token, message: "User created succesfully." });
     })
     .catch((error) => {
       if (!error.statusCode) {
