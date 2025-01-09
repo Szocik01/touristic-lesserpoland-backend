@@ -24,7 +24,7 @@ export class PlaceHint {
       point: string;
     }>(
       `
-                SELECT pt.osm_id, pt.name, pg.name as city, ST_AsGeoJSON(ST_Transform(pt.way,4326)) as pointł
+        SELECT pt.osm_id, pt.name, pg.name as city, ST_AsGeoJSON(ST_Transform(pt.way,4326)) as point
         FROM public.planet_osm_polygon pg 
         JOIN public.planet_osm_point pt 
             ON ST_Intersects(pt.way, pg.way) 

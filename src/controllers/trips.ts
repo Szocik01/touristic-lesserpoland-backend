@@ -14,16 +14,13 @@ import {
 } from "../types/api/trips";
 import { ErrorWithStatusCode } from "../types/custom/error";
 import {
-  RequestWithFilterSearchParams,
   RequestWithFilterSearchParamsAndLoggedUser,
   RequestWithLoggedUser,
 } from "../types/custom/middleware";
 import { Trip } from "../models/trip";
-import { SearchTrip } from "../search/searchTrip";
-import { text } from "body-parser";
 import TripComment from "../models/tripComment";
 
-export const getRoutes = (
+export const findRoutes = (
   req: Request<{}, {}, FindRouteBody>,
   res: Response,
   next: NextFunction
@@ -41,7 +38,7 @@ export const getRoutes = (
   })
     .then((response) => {
       if (!response.ok) {
-        response.json().then((errorResponse: GraphHopperApiErrorResponse) => {
+        return response.json().then((errorResponse: GraphHopperApiErrorResponse) => {
           const error: ErrorWithStatusCode = new Error();
           error.statusCode = response.status;
           error.message = errorResponse.message;
