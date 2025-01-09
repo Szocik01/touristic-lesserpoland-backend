@@ -9,7 +9,6 @@ import {
   FindRouteBody,
   GraphHopperApiErrorResponse,
   GraphHopperApiSuccessResponse,
-  LatLng,
   Point,
 } from "../types/api/trips";
 import { ErrorWithStatusCode } from "../types/custom/error";
@@ -20,7 +19,7 @@ import {
 import { Trip } from "../models/trip";
 import TripComment from "../models/tripComment";
 
-export const findRoutes = (
+export const findRoute = (
   req: Request<{}, {}, FindRouteBody>,
   res: Response,
   next: NextFunction
@@ -50,8 +49,8 @@ export const findRoutes = (
       }
       return response.json();
     })
-    .then((data: GraphHopperApiSuccessResponse) => {
-      res.json(data);
+    .then((data: { paths: GraphHopperApiSuccessResponse[] }) => {
+      res.json(data.paths.length > 0 ? data.paths[0] : {});
     })
     .catch((error) => {
       if (!error.statusCode) {
