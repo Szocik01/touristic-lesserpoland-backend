@@ -180,7 +180,7 @@ export class SearchTrip {
     const tableJoins: string[] = [];
 
     let query =
-      'Select planned_trips.id, color, trip_owner_id as "tripOwnerId", public, type, name, description, ST_AsGeoJSON(ST_Transform(route,4326)) as route from planned_trips';
+      'Select planned_trips.id, color, trip_owner_id as "tripOwnerId", public, type, name, description, ST_AsGeoJSON(ST_Transform(route,4326)) as route, distance, ascend, descend, time from planned_trips';
     if (
       this.id ||
       this.tripOwnerId ||
@@ -224,6 +224,10 @@ export class SearchTrip {
         name: string;
         description: string;
         route: GeoJsonLineString;
+        distance: number;
+        ascend: number;
+        descend: number;
+        time: number;
       }>(this.processSearchQuery());
       const trips = tripResult.rows;
       if (trips.length === 0) {
@@ -241,16 +245,17 @@ export class SearchTrip {
         )
       );
       const images = imagesResponse.rows;
-      const points = this.withPoints ? await TripPoint.findAllByTripsIds(tripsIds) : [];
+      const points = this.withPoints
+        ? await TripPoint.findAllByTripsIds(tripsIds)
+        : [];
       const comments = this.withComments
         ? await TripComment.findAllByTripsIds(tripsIds)
         : [];
       return trips.map((trip) => {
         return new Trip(trip)
           .setCurrentImages(images.filter((image) => image.tripId === trip.id))
-          .setComments(
-            comments.filter((comment) => comment.tripId === trip.id)
-          ).setPoints(points.filter((point) => point.tripId === trip.id));
+          .setComments(comments.filter((comment) => comment.tripId === trip.id))
+          .setPoints(points.filter((point) => point.tripId === trip.id));
       });
     } catch (error) {
       console.log(error);

@@ -38,13 +38,15 @@ export const findRoutes = (
   })
     .then((response) => {
       if (!response.ok) {
-        return response.json().then((errorResponse: GraphHopperApiErrorResponse) => {
-          const error: ErrorWithStatusCode = new Error();
-          error.statusCode = response.status;
-          error.message = errorResponse.message;
-          console.log(errorResponse);
-          throw error;
-        });
+        return response
+          .json()
+          .then((errorResponse: GraphHopperApiErrorResponse) => {
+            const error: ErrorWithStatusCode = new Error();
+            error.statusCode = response.status;
+            error.message = errorResponse.message;
+            console.log(errorResponse);
+            throw error;
+          });
       }
       return response.json();
     })
@@ -64,18 +66,44 @@ export const addTrip = (
   res: Response,
   next: NextFunction
 ) => {
-  const { route, color, isPublic, type, name, description, points } = req.body;
+  const {
+    route,
+    color,
+    isPublic,
+    type,
+    name,
+    description,
+    points,
+    ascend,
+    descend,
+    distance,
+    time,
+  } = req.body;
 
   const userId = req.userId;
 
-  if (!route || !color || !isPublic || !type || !name || !description || !points) {
+  if (
+    !route ||
+    !color ||
+    !isPublic ||
+    !type ||
+    !name ||
+    !description ||
+    !points ||
+    !ascend ||
+    !descend ||
+    !distance ||
+    !time
+  ) {
     const error: ErrorWithStatusCode = new Error("Missing required fields");
     error.statusCode = 400;
     throw error;
   }
 
-  if(points.length < 2) {
-    const error: ErrorWithStatusCode = new Error("At least 2 points are required");
+  if (points.length < 2) {
+    const error: ErrorWithStatusCode = new Error(
+      "At least 2 points are required"
+    );
     error.statusCode = 400;
     throw error;
   }
@@ -93,7 +121,6 @@ export const addTrip = (
     throw parseError;
   }
 
-
   const trip = new Trip({
     route,
     color,
@@ -104,8 +131,11 @@ export const addTrip = (
     tripOwnerId: userId,
     images: fileNames,
     points: parsedPoints,
+    ascend,
+    descend,
+    distance,
+    time,
   });
-
 
   trip
     .create()
@@ -304,4 +334,3 @@ export const deleteTripComment = (
       next(error);
     });
 };
-

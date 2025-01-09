@@ -17,6 +17,10 @@ export class Trip {
   name: string;
   description: string;
   tripOwnerId: string;
+  ascend: number;
+  descend: number;
+  distance: number;
+  time: number;
   comments: TripComment[] = [];
   points: TripPoint[] = [];
   private _newPoints: Point[] = [];
@@ -82,6 +86,10 @@ export class Trip {
       public: this.public,
       type: this.type,
       name: this.name,
+      ascend: this.ascend,
+      descend: this.descend,
+      distance: this.distance,
+      time: this.time,
       description: this.description,
       tripOwnerId: this.tripOwnerId,
       images: this.imagesToDTO(),
@@ -101,6 +109,10 @@ export class Trip {
     tripOwnerId: string;
     images?: { name: string }[];
     points?: Point[];
+    distance: number;
+    ascend: number;
+    descend: number;
+    time: number;
   }) {
     this.id = data.id;
     this.route = data.route;
@@ -110,6 +122,10 @@ export class Trip {
     this.name = data.name;
     this.description = data.description;
     this.tripOwnerId = data.tripOwnerId;
+    this.distance = data.distance;
+    this.ascend = data.ascend;
+    this.descend = data.descend;
+    this.time = data.time;
     if (data.images) {
       this._newImages = data.images;
     }
@@ -126,7 +142,7 @@ export class Trip {
       await client.query("BEGIN");
 
       const response = await db.query<{ id: number }>(
-        "INSERT INTO planned_trips (color, trip_owner_id, public, type, name, description, route) VALUES ($1, $2, $3, $4, $5, $6, ST_GeomFromGeoJSON($7)) RETURNING id",
+        "INSERT INTO planned_trips (color, trip_owner_id, public, type, name, description, route, ascend, descend, distance, time) VALUES ($1, $2, $3, $4, $5, $6, ST_GeomFromGeoJSON($7), $8, $9, $10, $11) RETURNING id",
         [
           this.color,
           this.tripOwnerId,
@@ -135,6 +151,10 @@ export class Trip {
           this.name,
           this.description,
           this.route,
+          this.ascend,
+          this.descend,
+          this.distance,
+          this.time,
         ]
       );
 
