@@ -32,6 +32,7 @@ export const findRoute = (
     body: JSON.stringify({
       points_encoded: false,
       instructions: false,
+      details:["leg_distance", "leg_time"],
       ...req.body,
     }),
   })
