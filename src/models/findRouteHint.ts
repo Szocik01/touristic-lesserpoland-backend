@@ -28,7 +28,7 @@ SELECT
     osm_id as id, 
     name, 
     way, 
-    'point' AS type,
+    'place' AS type,
 	CASE 
         WHEN population IS NOT NULL OR place IN ('village', 'city', 'town') THEN 1 
         ELSE 3 
