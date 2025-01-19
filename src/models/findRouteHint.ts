@@ -26,8 +26,8 @@ export class FindRouteHint {
       `
 SELECT 
     osm_id as id, 
-    name, 
-    way, 
+    name,
+    ST_AsGeoJSON(ST_Transform(way,4326)) as way,
     'place' AS type,
 	CASE 
         WHEN population IS NOT NULL OR place IN ('village', 'city', 'town') THEN 1 
@@ -51,7 +51,7 @@ UNION ALL
 SELECT 
     osm_id as id, 
     name, 
-    way, 
+    ST_AsGeoJSON(ST_Transform(way,4326)) as way,
     'polygon' AS type,
 	CASE 
         WHEN population IS NOT NULL OR place IN ('village', 'city', 'town') THEN 2 
