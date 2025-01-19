@@ -6,17 +6,21 @@ import tripRoutes from "./src/routes/trips";
 import userRoutes from "./src/routes/user";
 import searchRoutes from "./src/routes/search";
 import bodyParser from "body-parser";
+import path from "path";
 
 const app = express();
 const port = 8080;
 
 app.use(cors({ allowedHeaders: ["Content-Type", "Authorization"] }));
 app.use(bodyParser.json());
-app.use("/auth",authRoutes);
+console.log(path.join(__dirname, "images"));
 
-app.use(tripRoutes)
-app.use(userRoutes)
-app.use(searchRoutes)
+app.use("/images", express.static(path.join(__dirname, "src","images")));
+app.use("/auth", authRoutes);
+
+app.use(tripRoutes);
+app.use(userRoutes);
+app.use(searchRoutes);
 
 app.use(
   (
