@@ -13,7 +13,6 @@ const port = 8080;
 
 app.use(cors({ allowedHeaders: ["Content-Type", "Authorization"] }));
 app.use(bodyParser.json());
-console.log(path.join(__dirname, "images"));
 
 app.use("/images", express.static(path.join(__dirname, "src","images")));
 app.use("/auth", authRoutes);
