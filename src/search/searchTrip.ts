@@ -4,7 +4,6 @@ import {
   GeoJsonLineString,
   GeoJsonPoint,
   LatLng,
-  SearchTripResponse,
   TripTypes,
 } from "../types/api/trips";
 import db from "../utils/db";
@@ -214,7 +213,10 @@ export class SearchTrip {
     return query;
   }
 
-  async search(): Promise<SearchTripResponse> {
+  async search(): Promise<{
+    pageCount: number;
+    trips: Trip[]
+  }> {
     try {
       const tripResult = await db.query<{
         id: string;

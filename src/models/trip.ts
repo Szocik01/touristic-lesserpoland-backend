@@ -274,7 +274,10 @@ export class Trip {
   static async findAllByOwnerId(
     ownerId: string,
     searchParams: AcceptedTripSearchFilters
-  ): Promise<SearchTripResponse> {
+  ): Promise<{
+    pageCount: number;
+    trips: Trip[]
+  }> {
     const searchTrip = new SearchTrip();
     searchTrip.attributes = searchParams;
     searchTrip.tripOwnerId = ownerId;
