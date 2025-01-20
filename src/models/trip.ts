@@ -1,4 +1,4 @@
-import { GeoJsonLineString, TripTypes, Point } from "../types/api/trips";
+import { GeoJsonLineString, TripTypes, Point, SearchTripResponse } from "../types/api/trips";
 import { ErrorWithStatusCode } from "../types/custom/error";
 import { clearImages } from "../utils/clearImages";
 import db from "../utils/db";
@@ -267,14 +267,14 @@ export class Trip {
   static async findById(id: string): Promise<Trip | null> {
     const searchTrip = new SearchTrip();
     searchTrip.id = id;
-    const trips = await searchTrip.search();
-    return trips.length === 0 ? null : trips[0];
+    const searchTripResponse = await searchTrip.search();
+    return searchTripResponse.trips.length === 0 ? null : searchTripResponse.trips[0];
   }
 
   static async findAllByOwnerId(
     ownerId: string,
     searchParams: AcceptedTripSearchFilters
-  ): Promise<Trip[]> {
+  ): Promise<SearchTripResponse> {
     const searchTrip = new SearchTrip();
     searchTrip.attributes = searchParams;
     searchTrip.tripOwnerId = ownerId;

@@ -4,6 +4,7 @@ import {
   GeoJsonLineString,
   GeoJsonPoint,
   LatLng,
+  SearchTripResponse,
   TripTypes,
 } from "../types/api/trips";
 import db from "../utils/db";
@@ -16,7 +17,7 @@ export class SearchTrip {
   tripOwnerId: string;
   public: boolean = true;
   favoutitesOfUserId: string = "";
-  limit: number = 20;
+  limit: number = 12;
   withComments: boolean = true;
   withPoints: boolean = true;
   polygonToIntersectId: string;
@@ -213,7 +214,7 @@ export class SearchTrip {
     return query;
   }
 
-  async search(): Promise<Trip[]> {
+  async search(): Promise<SearchTripResponse> {
     try {
       const tripResult = await db.query<{
         id: string;
@@ -231,7 +232,7 @@ export class SearchTrip {
       }>(this.processSearchQuery());
       const trips = tripResult.rows;
       if (trips.length === 0) {
-        return [];
+        return {trips:[], pageCount: 0};
       }
       const tripsIds = trips.map((trip) => trip.id);
       const imagesResponse = await db.query<{
@@ -251,12 +252,14 @@ export class SearchTrip {
       const comments = this.withComments
         ? await TripComment.findAllByTripsIds(tripsIds)
         : [];
-      return trips.map((trip) => {
+      return {
+        pageCount: Math.ceil(tripResult.rowCount / this.limit),
+        trips:trips.map((trip) => {
         return new Trip(trip)
           .setCurrentImages(images.filter((image) => image.tripId === trip.id))
           .setComments(comments.filter((comment) => comment.tripId === trip.id))
           .setPoints(points.filter((point) => point.tripId === trip.id));
-      });
+      })};
     } catch (error) {
       console.log(error);
       if (!error.statusCode) {

@@ -32,7 +32,7 @@ export const findRoute = (
     body: JSON.stringify({
       points_encoded: false,
       instructions: false,
-      details:["leg_distance", "leg_time"],
+      details: ["leg_distance", "leg_time"],
       ...req.body,
     }),
   })
@@ -228,8 +228,13 @@ export const getUserFavoriteTrips = (
   const userId = req.userId;
   const searchParams = req.query;
   Trip.getFavouriteTripsByUserId(userId, searchParams)
-    .then((trips) => {
-      res.status(200).json(trips.map((trip) => trip.toDTO()));
+    .then((searchTripResponse) => {
+      res
+        .status(200)
+        .json({
+          pageCount: searchTripResponse.pageCount,
+          trips: searchTripResponse.trips.map((trip) => trip.toDTO()),
+        });
     })
     .catch((error) => {
       if (!error.statusCode) {

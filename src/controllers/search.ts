@@ -18,11 +18,16 @@ export const searchTrips = (
   searchTrip.query = req.query.query;
   searchTrip.page = req.query.page;
   searchTrip.polygonToIntersectId = req.query.polygonToIntersectId;
-// tutaj dodać poligony i punkty do obiektu zwracanego, oraz radius tak żeby móc go potem ustawić na froncie tak by wszystko było spójne, choćby domyślny radius.
+  // tutaj dodać poligony i punkty do obiektu zwracanego, oraz radius tak żeby móc go potem ustawić na froncie tak by wszystko było spójne, choćby domyślny radius.
   searchTrip
     .search()
-    .then((trips) => {
-      res.status(200).json(trips.map((trip) => trip.toDTO()));
+    .then((searchTripResponse) => {
+      res
+        .status(200)
+        .json({
+          pageCount: searchTripResponse.pageCount,
+          trips: searchTripResponse.trips.map((trip) => trip.toDTO()),
+        });
     })
     .catch((error) => {
       if (!error.statusCode) {
@@ -41,14 +46,16 @@ export const locationsHints = (
   if (query?.length < 3) {
     return res.status(200).json([]);
   }
-PlaceHint.getPlaceHintsByQuery(query).then((result) => {
-    res.status(200).json(result.map((place) => place.toDTO()));
-  }).catch((error) => {
-    if (!error.statusCode) {
-      error.statusCode = 500;
-    }
-    next(error);
-  });
+  PlaceHint.getPlaceHintsByQuery(query)
+    .then((result) => {
+      res.status(200).json(result.map((place) => place.toDTO()));
+    })
+    .catch((error) => {
+      if (!error.statusCode) {
+        error.statusCode = 500;
+      }
+      next(error);
+    });
 };
 
 export const findRoutesHints = (
@@ -60,13 +67,18 @@ export const findRoutesHints = (
   if (query?.length < 3) {
     return res.status(200).json([]);
   }
-  FindRouteHint.getFindRouteHintsByQuery(query).then((hints)=>{
-    res.status(200).json(hints.map((hint)=>{ return hint.toDTO()}))
-  }).catch((error) => {
-    if (!error.statusCode) {
-      error.statusCode = 500;
-    }
-    next(error);
-  });
+  FindRouteHint.getFindRouteHintsByQuery(query)
+    .then((hints) => {
+      res.status(200).json(
+        hints.map((hint) => {
+          return hint.toDTO();
+        })
+      );
+    })
+    .catch((error) => {
+      if (!error.statusCode) {
+        error.statusCode = 500;
+      }
+      next(error);
+    });
 };
-
