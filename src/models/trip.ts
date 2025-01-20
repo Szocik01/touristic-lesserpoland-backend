@@ -1,4 +1,4 @@
-import { GeoJsonLineString, TripTypes, Point, SearchTripResponse } from "../types/api/trips";
+import { GeoJsonLineString, TripTypes, Point } from "../types/api/trips";
 import { ErrorWithStatusCode } from "../types/custom/error";
 import { clearImages } from "../utils/clearImages";
 import db from "../utils/db";
