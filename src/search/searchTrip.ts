@@ -173,7 +173,7 @@ export class SearchTrip {
     }
   }
 
-  private processSearchQuery(): {query: string, pageCountQuery: string} {
+  private processSearchQuery(): {query: string, itemsCountQuery: string} {
     const whereAndConditions: string[] = [];
     const whereOrConditions: string[] = [];
     const paginationParams: string[] = [];
@@ -217,7 +217,7 @@ export class SearchTrip {
     if (paginationParams.length > 0) {
       query += " " + paginationParams.join(" ");
     }
-    return {query, pageCountQuery};
+    return {query, itemsCountQuery: pageCountQuery};
   }
 
   async search(): Promise<{
@@ -262,7 +262,7 @@ export class SearchTrip {
       const comments = this.withComments
         ? await TripComment.findAllByTripsIds(tripsIds)
         : [];
-      const itemsCount = (await db.query<{ count: number }>(processedQueries.pageCountQuery)).rows[0].count;
+      const itemsCount = (await db.query<{ count: number }>(processedQueries.itemsCountQuery)).rows[0].count;
 
       return {
         pageCount: Math.ceil(itemsCount / this.limit),
