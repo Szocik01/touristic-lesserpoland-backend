@@ -160,7 +160,7 @@ export class SearchTrip {
     if (this.limit) {
       paginationParams.push(`limit ${this.limit}`);
     }
-    if (this.page) {
+    if (this._page) {
       paginationParams.push(`offset ${(this._page - 1) * this.limit}`);
     }
   }
@@ -173,7 +173,7 @@ export class SearchTrip {
     }
   }
 
-  private processSearchQuery(): string {
+  private processSearchQuery(): {query: string, pageCountQuery: string} {
     const whereAndConditions: string[] = [];
     const whereOrConditions: string[] = [];
     const paginationParams: string[] = [];
@@ -181,6 +181,7 @@ export class SearchTrip {
 
     let query =
       'Select planned_trips.id, color, trip_owner_id as "tripOwnerId", public, type, name, description, ST_AsGeoJSON(ST_Transform(route,4326)) as route, distance, ascend, descend, time from planned_trips';
+    let pageCountQuery = "SELECT COUNT(id) FROM planned_trips";
     if (
       this.id ||
       this.tripOwnerId ||
@@ -195,11 +196,18 @@ export class SearchTrip {
       this.processGeoJsonAttributes(whereAndConditions);
       if (tableJoins.length > 0) {
         query += " " + tableJoins.join(" ");
+        pageCountQuery += " " + tableJoins.join(" ");
       }
       if (whereAndConditions.length > 0 || whereOrConditions.length > 0) {
         query += " where";
+        pageCountQuery += " where";
         query += " " + whereAndConditions.join(" and ");
+        pageCountQuery += " " + whereAndConditions.join(" and ");
         query +=
+          whereAndConditions.length > 0 && whereOrConditions.length > 0
+            ? " and (" + whereOrConditions.join(" or ") + ")"
+            : " " + whereOrConditions.join(" or ");
+        pageCountQuery +=
           whereAndConditions.length > 0 && whereOrConditions.length > 0
             ? " and (" + whereOrConditions.join(" or ") + ")"
             : " " + whereOrConditions.join(" or ");
@@ -209,14 +217,14 @@ export class SearchTrip {
     if (paginationParams.length > 0) {
       query += " " + paginationParams.join(" ");
     }
-    console.log(query);
-    return query;
+    return {query, pageCountQuery};
   }
 
   async search(): Promise<{
     pageCount: number;
-    trips: Trip[]
+    trips: Trip[];
   }> {
+    const processedQueries = this.processSearchQuery();
     try {
       const tripResult = await db.query<{
         id: string;
@@ -231,10 +239,10 @@ export class SearchTrip {
         ascend: number;
         descend: number;
         time: number;
-      }>(this.processSearchQuery());
+      }>(processedQueries.query);
       const trips = tripResult.rows;
       if (trips.length === 0) {
-        return {trips:[], pageCount: 0};
+        return { trips: [], pageCount: 0 };
       }
       const tripsIds = trips.map((trip) => trip.id);
       const imagesResponse = await db.query<{
@@ -254,14 +262,21 @@ export class SearchTrip {
       const comments = this.withComments
         ? await TripComment.findAllByTripsIds(tripsIds)
         : [];
+      const itemsCount = (await db.query<{ count: number }>(processedQueries.pageCountQuery)).rows[0].count;
+
       return {
-        pageCount: Math.ceil(tripResult.rowCount / this.limit),
-        trips:trips.map((trip) => {
-        return new Trip(trip)
-          .setCurrentImages(images.filter((image) => image.tripId === trip.id))
-          .setComments(comments.filter((comment) => comment.tripId === trip.id))
-          .setPoints(points.filter((point) => point.tripId === trip.id));
-      })};
+        pageCount: Math.ceil(itemsCount / this.limit),
+        trips: trips.map((trip) => {
+          return new Trip(trip)
+            .setCurrentImages(
+              images.filter((image) => image.tripId === trip.id)
+            )
+            .setComments(
+              comments.filter((comment) => comment.tripId === trip.id)
+            )
+            .setPoints(points.filter((point) => point.tripId === trip.id));
+        }),
+      };
     } catch (error) {
       console.log(error);
       if (!error.statusCode) {
