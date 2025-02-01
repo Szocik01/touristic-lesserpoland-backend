@@ -24,7 +24,7 @@ export class PlaceHint {
       point: string;
     }>(
       `
-        SELECT pt.osm_id, pt.name, pg.name as city, ST_AsGeoJSON(ST_Transform(pt.way,4326)) as point
+        SELECT DISTINCT ON (pt.osm_id) pt.osm_id, pt.name, pg.name as city, ST_AsGeoJSON(ST_Transform(pt.way,4326)) as point
         FROM public.planet_osm_polygon pg 
         JOIN public.planet_osm_point pt 
             ON ST_Intersects(pt.way, pg.way) 
@@ -46,6 +46,7 @@ export class PlaceHint {
               OR pg.place = 'town'
           ) 
         ORDER BY 
+            pt.osm_id,
             CASE 
                 WHEN pg.name NOT ILIKE 'gmina%' 
                      AND pg.name NOT ILIKE 'województwo%'  
@@ -54,8 +55,7 @@ export class PlaceHint {
                 WHEN pg.name ILIKE 'powiat%' THEN 3 
                 WHEN pg.name ILIKE 'województwo%' THEN 4 
                 ELSE 5 
-            END,
-             LENGTH(pt.name)
+            END
              limit 4
                 `,
       [`${query}%`]
