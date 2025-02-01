@@ -137,9 +137,9 @@ export class SearchTrip {
   private processGeoJsonAttributes(whereConditions: string[]) {
     if (this._point) {
       whereConditions.push(
-        `ST_DWithin(route, ST_GeomFromGeoJSON('${JSON.stringify(
+        `ST_DWithin(ST_Transform(route, 3857), ST_Transform(ST_GeomFromGeoJSON('${JSON.stringify(
           this._point
-        )}'), ${this._radius})`
+        )}'),3857), ${this._radius})`
       );
     }
     if (this.polygonToIntersectId) {
@@ -173,7 +173,7 @@ export class SearchTrip {
     }
   }
 
-  private processSearchQuery(): {query: string, itemsCountQuery: string} {
+  private processSearchQuery(): { query: string; itemsCountQuery: string } {
     const whereAndConditions: string[] = [];
     const whereOrConditions: string[] = [];
     const paginationParams: string[] = [];
@@ -217,7 +217,8 @@ export class SearchTrip {
     if (paginationParams.length > 0) {
       query += " " + paginationParams.join(" ");
     }
-    return {query, itemsCountQuery: pageCountQuery};
+    console.log(query);
+    return { query, itemsCountQuery: pageCountQuery };
   }
 
   async search(): Promise<{
@@ -262,7 +263,9 @@ export class SearchTrip {
       const comments = this.withComments
         ? await TripComment.findAllByTripsIds(tripsIds)
         : [];
-      const itemsCount = (await db.query<{ count: number }>(processedQueries.itemsCountQuery)).rows[0].count;
+      const itemsCount = (
+        await db.query<{ count: number }>(processedQueries.itemsCountQuery)
+      ).rows[0].count;
 
       return {
         pageCount: Math.ceil(itemsCount / this.limit),
