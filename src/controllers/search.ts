@@ -10,6 +10,7 @@ export const searchTrips = (
   next: NextFunction
 ) => {
   const searchTrip = new SearchTrip();
+  searchTrip.id = req.query.id;
   searchTrip.withComments = false;
   searchTrip.withPoints = false;
   searchTrip.attributes = req.query;

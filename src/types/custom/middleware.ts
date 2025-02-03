@@ -1,6 +1,7 @@
 import { Request } from "express";
 
 export type AcceptedTripSearchFilters = {
+  id?: string;
   name?: string;
   description?: string;
   color?: string;

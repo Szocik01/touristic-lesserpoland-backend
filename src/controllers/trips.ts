@@ -13,6 +13,7 @@ import {
 } from "../types/api/trips";
 import { ErrorWithStatusCode } from "../types/custom/error";
 import {
+  RequestWithFilterSearchParams,
   RequestWithFilterSearchParamsAndLoggedUser,
   RequestWithLoggedUser,
 } from "../types/custom/middleware";
@@ -52,6 +53,29 @@ export const findRoute = (
     })
     .then((data: { paths: GraphHopperApiSuccessResponse[] }) => {
       res.json(data.paths.length > 0 ? data.paths[0] : {});
+    })
+    .catch((error) => {
+      if (!error.statusCode) {
+        error.statusCode = 500;
+      }
+      next(error);
+    });
+};
+
+export const getTrip = (
+  req: Request<{id: string}>,
+  res: Response,
+  next: NextFunction
+) => {
+  const id = req.params.id;
+  Trip.findById(id)
+    .then((trip) => {
+      if(!trip) {
+        const error: ErrorWithStatusCode = new Error("Trip not found");
+        error.statusCode = 404;
+        throw error;
+      }
+      res.status(200).json(trip.toDTO());
     })
     .catch((error) => {
       if (!error.statusCode) {

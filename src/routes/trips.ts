@@ -5,6 +5,7 @@ import { isAuthTokenValid } from "../middlewares/isAuthTokenValid";
 import { uploadPhoto } from "../middlewares/uploadPhoto";
 
 router.post("/find-route", tripsController.findRoute)
+router.get("/get-trip/:id", tripsController.getTrip);
 router.post("/add-trip", isAuthTokenValid, uploadPhoto, tripsController.addTrip);
 router.post("/edit-trip", isAuthTokenValid, uploadPhoto, tripsController.editTrip);
 router.delete("/delete-trip/:id", isAuthTokenValid, tripsController.deleteTrip);
