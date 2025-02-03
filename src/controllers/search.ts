@@ -5,11 +5,13 @@ import { PlaceHint } from "../models/placeHint";
 import { FindRouteHint } from "../models/findRouteHint";
 
 export const searchTrips = (
-  req: RequestWithFilterSearchParams,
+  req: RequestWithFilterSearchParams<{}, {}, { userId?: string }>,
   res: Response,
   next: NextFunction
 ) => {
   const searchTrip = new SearchTrip();
+  searchTrip.public = true;
+  searchTrip.userId = req.query.userId;
   searchTrip.id = req.query.id;
   searchTrip.withComments = false;
   searchTrip.withPoints = false;
@@ -23,12 +25,10 @@ export const searchTrips = (
   searchTrip
     .search()
     .then((searchTripResponse) => {
-      res
-        .status(200)
-        .json({
-          pageCount: searchTripResponse.pageCount,
-          trips: searchTripResponse.trips.map((trip) => trip.toDTO()),
-        });
+      res.status(200).json({
+        pageCount: searchTripResponse.pageCount,
+        trips: searchTripResponse.trips.map((trip) => trip.toDTO()),
+      });
     })
     .catch((error) => {
       if (!error.statusCode) {

@@ -21,6 +21,7 @@ export class Trip {
   descend: number;
   distance: number;
   time: number;
+  isUsersFavourite: boolean;
   comments: TripComment[] = [];
   points: TripPoint[] = [];
   private _newPoints: Point[] = [];
@@ -78,7 +79,6 @@ export class Trip {
   }
 
   public toDTO() {
-
     return {
       id: this.id,
       route: this.route,
@@ -92,9 +92,10 @@ export class Trip {
       time: this.time,
       description: this.description,
       tripOwnerId: this.tripOwnerId,
+      isUsersFavourite: this.isUsersFavourite,
       images: this.imagesToDTO(),
       comments: this.comments.map((comment) => comment.toDTO()),
-      points: this.points.map((point) => point.toDTO() ),
+      points: this.points.map((point) => point.toDTO()),
     };
   }
 
@@ -113,6 +114,7 @@ export class Trip {
     ascend: number;
     descend: number;
     time: number;
+    isUsersFavourite?: boolean;
   }) {
     this.id = data.id;
     this.route = data.route;
@@ -126,16 +128,16 @@ export class Trip {
     this.ascend = data.ascend;
     this.descend = data.descend;
     this.time = data.time;
+    this.isUsersFavourite = data.isUsersFavourite ?? false;
     if (data.images) {
       this._newImages = data.images;
     }
-    if(data.points) {
-      this._newPoints = data.points
+    if (data.points) {
+      this._newPoints = data.points;
     }
   }
 
   async create() {
-   
     const client = await db.connect();
 
     try {
@@ -170,13 +172,16 @@ export class Trip {
           )
         );
       }
-      if(this._newPoints.length !== 0) {
-        const tripPoints = this._newPoints.map(point => {
-          return new TripPoint({tripId:response.rows[0].id.toString() ,...point})
-        })
-        await TripPoint.addManyPoints(tripPoints)
+      if (this._newPoints.length !== 0) {
+        const tripPoints = this._newPoints.map((point) => {
+          return new TripPoint({
+            tripId: response.rows[0].id.toString(),
+            ...point,
+          });
+        });
+        await TripPoint.addManyPoints(tripPoints);
       }
-      
+
       return await client.query("COMMIT");
     } catch (error) {
       await client.query("ROLLBACK");
@@ -264,11 +269,14 @@ export class Trip {
     }
   }
 
-  static async findById(id: string): Promise<Trip | null> {
+  static async findById(id: string, userId?: string): Promise<Trip | null> {
     const searchTrip = new SearchTrip();
     searchTrip.id = id;
+    searchTrip.userId = userId;
     const searchTripResponse = await searchTrip.search();
-    return searchTripResponse.trips.length === 0 ? null : searchTripResponse.trips[0];
+    return searchTripResponse.trips.length === 0
+      ? null
+      : searchTripResponse.trips[0];
   }
 
   static async findAllByOwnerId(
@@ -276,7 +284,7 @@ export class Trip {
     searchParams: AcceptedTripSearchFilters
   ): Promise<{
     pageCount: number;
-    trips: Trip[]
+    trips: Trip[];
   }> {
     const searchTrip = new SearchTrip();
     searchTrip.attributes = searchParams;

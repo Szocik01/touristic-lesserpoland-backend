@@ -63,16 +63,22 @@ export const findRoute = (
 };
 
 export const getTrip = (
-  req: Request<{id: string}>,
+  req: Request<{id: string},{},{},{userId?: string}>,
   res: Response,
   next: NextFunction
 ) => {
   const id = req.params.id;
-  Trip.findById(id)
+  const userId = req.query.userId;
+  Trip.findById(id, userId)
     .then((trip) => {
       if(!trip) {
         const error: ErrorWithStatusCode = new Error("Trip not found");
         error.statusCode = 404;
+        throw error;
+      }
+      if(!trip.public && trip.tripOwnerId != userId) {
+        const error: ErrorWithStatusCode = new Error("Access to trip denied");
+        error.statusCode = 403;
         throw error;
       }
       res.status(200).json(trip.toDTO());

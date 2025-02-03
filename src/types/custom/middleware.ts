@@ -12,6 +12,7 @@ export type AcceptedTripSearchFilters = {
   radius?: string;
   polygonToIntersectId?: string;
   query?: string;
+  userId?: string;
 };
 
 export interface RequestWithLoggedUser<

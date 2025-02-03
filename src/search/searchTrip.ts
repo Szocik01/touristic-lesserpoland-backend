@@ -14,8 +14,9 @@ import TripPoint from "../models/tripPoint";
 export class SearchTrip {
   id: string;
   tripOwnerId: string;
-  public: boolean = true;
-  favoutitesOfUserId: string = "";
+  userId: string;
+  public?: boolean;
+  favoutitesOfUserId: string;
   limit: number = 12;
   withComments: boolean = true;
   withPoints: boolean = true;
@@ -105,14 +106,14 @@ export class SearchTrip {
     whereOrConditions: string[]
   ) {
     if (this.id) {
-      whereAndConditions.push(`id = ${escapeLiteral(this.id)}`);
+      whereAndConditions.push(`planned_trips.id = ${escapeLiteral(this.id)}`);
     }
     if (this.tripOwnerId) {
       whereAndConditions.push(
         `trip_owner_id = ${escapeLiteral(this.tripOwnerId)}`
       );
     }
-    if (this.public) {
+    if (this.public !== undefined) {
       whereAndConditions.push(
         `public = ${escapeLiteral(this.public ? "true" : "false")}`
       );
@@ -170,6 +171,12 @@ export class SearchTrip {
       tableJoins.push(
         `join user_favourites on user_favourites.trip_id = planned_trips.id`
       );
+    } else if (this.userId) {
+      tableJoins.push(
+        `left join user_favourites on user_favourites.trip_id = planned_trips.id and user_favourites.user_id = ${escapeLiteral(
+          this.userId
+        )}`
+      );
     }
   }
 
@@ -178,12 +185,17 @@ export class SearchTrip {
     const whereOrConditions: string[] = [];
     const paginationParams: string[] = [];
     const tableJoins: string[] = [];
-
-    let query =
-      'Select planned_trips.id, color, trip_owner_id as "tripOwnerId", public, type, name, description, ST_AsGeoJSON(ST_Transform(route,4326)) as route, distance, ascend, descend, time from planned_trips';
-    let pageCountQuery = "SELECT COUNT(id) FROM planned_trips";
+    let query = `Select planned_trips.id, color, trip_owner_id as "tripOwnerId", public, type, name, description, ST_AsGeoJSON(ST_Transform(route,4326)) as route, distance, ascend, descend, time ${
+      this.userId
+        ? `, user_favourites.user_id = ${escapeLiteral(
+            this.userId
+          )} as \"isUsersFavourite\"`
+        : ""
+    } from planned_trips`;
+    let pageCountQuery = "SELECT COUNT(planned_trips.id) FROM planned_trips";
     if (
       this.id ||
+      this.userId ||
       this.tripOwnerId ||
       this.favoutitesOfUserId ||
       this._point ||
@@ -217,7 +229,6 @@ export class SearchTrip {
     if (paginationParams.length > 0) {
       query += " " + paginationParams.join(" ");
     }
-    console.log(query);
     return { query, itemsCountQuery: pageCountQuery };
   }
 
@@ -240,6 +251,7 @@ export class SearchTrip {
         ascend: number;
         descend: number;
         time: number;
+        isUsersFavourite?: boolean;
       }>(processedQueries.query);
       const trips = tripResult.rows;
       if (trips.length === 0) {
