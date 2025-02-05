@@ -1,5 +1,5 @@
 import db from "../utils/db";
-import { GeoJsonPoint, LatLng } from "../types/api/trips";
+import { GeoJsonPoint, LatLngAlt } from "../types/api/trips";
 import format from "pg-format";
 
 class TripPoint {
@@ -31,7 +31,7 @@ class TripPoint {
     }
   }
 
-  public set coordinates(value: LatLng | undefined) {
+  public set coordinates(value: LatLngAlt | undefined) {
     if (!value) {
       this._coordinates = null;
       return;
@@ -42,7 +42,7 @@ class TripPoint {
     id?: string;
     osmPointId?: number;
     tripId: string;
-    coordinates?: LatLng;
+    coordinates?: LatLngAlt;
     order: number;
     name?: string;
   }) {

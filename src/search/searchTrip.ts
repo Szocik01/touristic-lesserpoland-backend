@@ -3,7 +3,7 @@ import { Trip } from "../models/trip";
 import {
   GeoJsonLineString,
   GeoJsonPoint,
-  LatLng,
+  LatLngAlt,
   TripTypes,
 } from "../types/api/trips";
 import db from "../utils/db";
@@ -59,7 +59,7 @@ export class SearchTrip {
     if (!regexValidationResult) {
       return;
     }
-    const point: LatLng = [
+    const point: LatLngAlt = [
       parseFloat(regexValidationResult[1]),
       parseFloat(regexValidationResult[3]),
     ];
