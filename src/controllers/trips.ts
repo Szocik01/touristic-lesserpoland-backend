@@ -63,7 +63,7 @@ export const findRoute = (
 };
 
 export const getTrip = (
-  req: Request<{id: string},{},{},{userId?: string}>,
+  req: Request<{ id: string }, {}, {}, { userId?: string }>,
   res: Response,
   next: NextFunction
 ) => {
@@ -71,12 +71,12 @@ export const getTrip = (
   const userId = req.query.userId;
   Trip.findById(id, userId)
     .then((trip) => {
-      if(!trip) {
+      if (!trip) {
         const error: ErrorWithStatusCode = new Error("Trip not found");
         error.statusCode = 404;
         throw error;
       }
-      if(!trip.public && trip.tripOwnerId != userId) {
+      if (!trip.public && trip.tripOwnerId != userId) {
         const error: ErrorWithStatusCode = new Error("Access to trip denied");
         error.statusCode = 403;
         throw error;
@@ -259,12 +259,10 @@ export const getUserFavoriteTrips = (
   const searchParams = req.query;
   Trip.getFavouriteTripsByUserId(userId, searchParams)
     .then((searchTripResponse) => {
-      res
-        .status(200)
-        .json({
-          pageCount: searchTripResponse.pageCount,
-          trips: searchTripResponse.trips.map((trip) => trip.toDTO()),
-        });
+      res.status(200).json({
+        pageCount: searchTripResponse.pageCount,
+        trips: searchTripResponse.trips.map((trip) => trip.toDTO()),
+      });
     })
     .catch((error) => {
       if (!error.statusCode) {
@@ -294,7 +292,7 @@ export const addTripComment = (
   comment
     .create()
     .then(() => {
-      res.status(201).json({ message: "Comment added successfully" });
+      res.status(201).json(comment.toDTO());
     })
     .catch((error) => {
       if (!error.statusCode) {
@@ -328,10 +326,9 @@ export const editTripComment = (
         throw error;
       }
       comment.content = content;
-      return comment.update();
-    })
-    .then(() => {
-      res.status(200).json({ message: "Comment updated successfully" });
+      return comment.update().then(() => {
+        res.status(200).json(comment.toDTO());
+      });
     })
     .catch((error) => {
       if (!error.statusCode) {
@@ -359,8 +356,8 @@ export const deleteTripComment = (
       }
       return comment.delete();
     })
-    .then(() => {
-      res.status(200).json({ message: "Comment deleted successfully" });
+    .then((id) => {
+      res.status(200).json({id: id});
     })
     .catch((error) => {
       if (!error.statusCode) {

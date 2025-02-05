@@ -5,8 +5,11 @@ class TripComment {
   id?: string;
   tripId: string;
   userId: string;
+  userName?: string;
   content: string;
   dateAdd?: string;
+  private static _selectTripQueryBase =
+    'Select trip_comments.id, user_id as "userId", trip_id as "tripId", date_add as "dateAdd", content, username as "userName" from trip_comments join users on trip_comments.user_id = users.id';
 
   constructor(data: {
     tripId: string;
@@ -14,12 +17,14 @@ class TripComment {
     content: string;
     id?: string;
     dateAdd?: string;
+    userName?: string;
   }) {
     this.tripId = data.tripId;
     this.userId = data.userId;
     this.content = data.content;
     if (data.id) this.id = data.id;
     if (data.dateAdd) this.dateAdd = data.dateAdd;
+    if (data.userName) this.userName = data.userName;
   }
 
   toDTO() {
@@ -29,14 +34,22 @@ class TripComment {
       userId: this.userId,
       content: this.content,
       dateAdd: this.dateAdd,
+      userName: this.userName,
     };
   }
 
   async create() {
-    await db.query(
-      "Insert into trip_comments (trip_id, user_id, content, date_add) values ($1, $2, $3, NOW()::TIMESTAMP)",
+    const commentResponse = await db.query<{
+      id: number;
+      dateAdd: string;
+      userName: string;
+    }>(
+      'Insert into trip_comments (trip_id, user_id, content, date_add) values ($1, $2, $3, NOW()::TIMESTAMP) RETURNING id, date_add as "dateAdd", (Select username from users where id = $2) as "userName"',
       [this.tripId, this.userId, this.content]
     );
+    this.id = commentResponse.rows[0].id.toString();
+    this.dateAdd = commentResponse.rows[0].dateAdd;
+    this.userName = commentResponse.rows[0].userName;
   }
 
   async update() {
@@ -53,7 +66,11 @@ class TripComment {
     if (!this.id) {
       throw new Error("Cannot delete comment that was not created");
     }
-    await db.query("Delete from trip_comments where id = $1", [this.id]);
+    await db.query<{id?: number}>(
+      "Delete from trip_comments where id = $1",
+      [this.id]
+    );
+    return this.id;
   }
 
   static async findAllByTripsIds(tripsIds: string[]): Promise<TripComment[]> {
@@ -64,9 +81,10 @@ class TripComment {
         tripId: string;
         dateAdd: string;
         content: string;
+        userName: string;
       }>(
         format(
-          "Select id, user_id as \"userId\", trip_id as \"tripId\", date_add as \"dateAdd\", content from trip_comments where trip_id in (%L)",
+          `${TripComment._selectTripQueryBase} where trip_id in (%L)`,
           tripsIds
         )
       )
@@ -74,6 +92,7 @@ class TripComment {
     if (comments.length === 0) {
       return [];
     }
+
     return comments.map((comment) => {
       return new TripComment(comment);
     });
@@ -86,10 +105,10 @@ class TripComment {
       tripId: string;
       dateAdd: string;
       content: string;
-    }>(
-      "Select id, user_id as \"userId\", trip_id as \"tripId\", date_add as \"dateAdd\", content from trip_comments where id = $1",
-      [commentId]
-    );
+      userName: string;
+    }>(`${TripComment._selectTripQueryBase} where trip_comments.id = $1`, [
+      commentId,
+    ]);
     if (commentResponse.rowCount === 0) {
       return null;
     }
@@ -104,10 +123,8 @@ class TripComment {
         tripId: string;
         dateAdd: string;
         content: string;
-      }>(
-        "Select id, user_id as userId, trip_id as tripId, date_add as dateAdd, content from trip_comments where trip_id = $1",
-        [tripId]
-      )
+        userName: string;
+      }>(`${TripComment._selectTripQueryBase} where trip_id = $1`, [tripId])
     ).rows;
     if (comments.length === 0) {
       return [];
