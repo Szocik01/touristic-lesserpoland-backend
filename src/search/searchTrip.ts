@@ -138,9 +138,9 @@ export class SearchTrip {
   private processGeoJsonAttributes(whereConditions: string[]) {
     if (this._point) {
       whereConditions.push(
-        `ST_DWithin(ST_Transform(route, 3857), ST_Transform(ST_GeomFromGeoJSON('${JSON.stringify(
+        `ST_DWithin(ST_Transform(route, 4326)::geography, ST_Transform(ST_GeomFromGeoJSON('${JSON.stringify(
           this._point
-        )}'),3857), ${this._radius})`
+        )}'),4326)::geography, ${this._radius})`
       );
     }
     if (this.polygonToIntersectId) {
@@ -167,15 +167,11 @@ export class SearchTrip {
   }
 
   private processTableJoins(tableJoins: string[]) {
-    if (this.favoutitesOfUserId) {
+    if (this.favoutitesOfUserId || this.userId) {
       tableJoins.push(
-        `join user_favourites on user_favourites.trip_id = planned_trips.id`
-      );
-    } else if (this.userId) {
-      tableJoins.push(
-        `left join user_favourites on user_favourites.trip_id = planned_trips.id and user_favourites.user_id = ${escapeLiteral(
-          this.userId
-        )}`
+        `${
+          this.favoutitesOfUserId ? "" : "left"
+        } join user_favourites on user_favourites.trip_id = planned_trips.id`
       );
     }
   }
@@ -185,11 +181,13 @@ export class SearchTrip {
     const whereOrConditions: string[] = [];
     const paginationParams: string[] = [];
     const tableJoins: string[] = [];
-    let query = `Select planned_trips.id, color, trip_owner_id as "tripOwnerId", public, type, name, description, ST_AsGeoJSON(ST_Transform(route,4326)) as route, distance, ascend, descend, time ${
+    let query = `Select planned_trips.id, color, trip_owner_id as \"tripOwnerId\", public, type, name, description, ST_AsGeoJSON(ST_Transform(route,4326)) as route, distance, ascend, descend, time ${
       this.userId
         ? `, user_favourites.user_id = ${escapeLiteral(
             this.userId
-          )} as \"isUsersFavourite\"`
+          )} as \"isUsersFavourite\", trip_owner_id = ${escapeLiteral(
+            this.userId
+          )} as \"isUserOwner\"`
         : ""
     } from planned_trips`;
     let pageCountQuery = "SELECT COUNT(planned_trips.id) FROM planned_trips";
@@ -200,6 +198,7 @@ export class SearchTrip {
       this.favoutitesOfUserId ||
       this._point ||
       this.polygonToIntersectId ||
+      this.public !== undefined ||
       Object.keys(this._exactAttributes).length > 0 ||
       Object.keys(this._likeAttributes).length > 0
     ) {
@@ -252,6 +251,7 @@ export class SearchTrip {
         descend: number;
         time: number;
         isUsersFavourite?: boolean;
+        isUserOwner?: boolean;
       }>(processedQueries.query);
       const trips = tripResult.rows;
       if (trips.length === 0) {
@@ -293,7 +293,6 @@ export class SearchTrip {
         }),
       };
     } catch (error) {
-      console.log(error);
       if (!error.statusCode) {
         error.statusCode = 500;
       }

@@ -23,6 +23,14 @@ export interface RequestWithLoggedUser<
   userId: string;
 }
 
+export interface RequestWithOptionalLoggedUser<
+  ReqBody = any,
+  ParamsDictionary = any,
+  ReqQuery = any
+> extends Request<ParamsDictionary, {}, ReqBody, ReqQuery> {
+  userId?: string;
+}
+
 export interface RequestWithFilterSearchParams<
   ReqBody = any,
   ParamsDictionary = any,
@@ -33,6 +41,19 @@ export interface RequestWithFilterSearchParams<
     ReqBody,
     ReqQuery & AcceptedTripSearchFilters
   > {}
+
+export interface RequestWithFilterSearchParamsAndOptionalLoggedUser<
+  ReqBody = any,
+  ParamsDictionary = any,
+  ReqQuery = {}
+> extends Request<
+    ParamsDictionary,
+    {},
+    ReqBody,
+    ReqQuery & AcceptedTripSearchFilters
+  > {
+  userId?: string;
+}
 
 export interface RequestWithFilterSearchParamsAndLoggedUser<
   ReqBody = any,

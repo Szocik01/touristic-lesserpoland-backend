@@ -13,6 +13,21 @@ export class FindRouteHint {
     this.way = way;
   }
 
+  static getFindRouteHintByIdAndType = async (id: string, type: "place" | "polygon") => {
+
+    const response = await db.query<{
+        id: number;
+        name: string;
+        way: string;
+        type: "place" | "polygon";      
+    }>(`SELECT osm_id as id, name, ST_AsGeoJSON(ST_Transform(way,4326)) as way,'${type}' AS type FROM ${type === "place" ? "public.planet_osm_point" :"public.planet_osm_polygon"} WHERE osm_id = $1`, [id]);
+      if(response.rowCount === 0){
+        return null;
+      }
+      const row = response.rows[0];
+      return new FindRouteHint(row.id, row.name, row.way, row.type);
+  }
+
   static getFindRouteHintsByQuery = async (query: string) => {
     if (query.length < 3) {
       return [];

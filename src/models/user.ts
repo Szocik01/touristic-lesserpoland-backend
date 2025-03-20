@@ -12,7 +12,7 @@ export default class User {
   }
 
   addUser() {
-    return db.query<{id: number}>(
+    return db.query<{ id: number }>(
       "Insert into users (email, username ,password) values ($1, $2, $3) RETURNING id",
       [this.email, this.userName, this.hashedPassword]
     );
@@ -36,14 +36,13 @@ export default class User {
         "INSERT INTO user_favourites (user_id, trip_id) VALUES ($1, $2)",
         [userId, tripId]
       );
-      return true;
+      return { isAdded: true, tripId: tripId };
     } else {
       await db.query<{ isAdded: boolean }>(
         "DELETE FROM user_favourites WHERE user_id = $1 AND trip_id = $2",
         [userId, tripId]
       );
-      return false;
+      return { isAdded: false, tripId: tripId };
     }
   }
-
 }

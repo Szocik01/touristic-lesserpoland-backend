@@ -11,14 +11,8 @@ export const toggleFavouriteTrip = (
   const userId = req.userId;
 
   User.toggleTripInUsersFavourite(userId, tripId)
-    .then((isAdded) => {
-      res
-        .status(200)
-        .json({
-          message: isAdded
-            ? "Trip added to favourites"
-            : "Trip removed from favourites",
-        });
+    .then((data) => {
+      res.status(200).json(data);
     })
     .catch((error) => {
       if (!error.statusCode) {

@@ -1,1 +1,1 @@
-export type ErrorWithStatusCode = Error & { statusCode?: number, };
+export type ErrorWithStatusCode = Error & { statusCode?: number };

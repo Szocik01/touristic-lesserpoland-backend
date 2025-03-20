@@ -7,6 +7,7 @@ import TripComment from "./tripComment";
 import { SearchTrip } from "../search/searchTrip";
 import { AcceptedTripSearchFilters } from "../types/custom/middleware";
 import TripPoint from "./tripPoint";
+import { TripWeather } from "./tripWeather";
 
 export class Trip {
   id: string | undefined;
@@ -22,7 +23,9 @@ export class Trip {
   distance: number;
   time: number;
   isUsersFavourite: boolean;
+  isUserOwner: boolean;
   comments: TripComment[] = [];
+  tripWeather: TripWeather | null = null;
   points: TripPoint[] = [];
   private _newPoints: Point[] = [];
   private _currentImages: { id: string; name: string }[] = [];
@@ -93,9 +96,11 @@ export class Trip {
       description: this.description,
       tripOwnerId: this.tripOwnerId,
       isUsersFavourite: this.isUsersFavourite,
+      isUserOwner: this.isUserOwner,
       images: this.imagesToDTO(),
       comments: this.comments.map((comment) => comment.toDTO()),
       points: this.points.map((point) => point.toDTO()),
+      weather: this.tripWeather?.toDTO(),
     };
   }
 
@@ -115,6 +120,7 @@ export class Trip {
     descend: number;
     time: number;
     isUsersFavourite?: boolean;
+    isUserOwner?: boolean;
   }) {
     this.id = data.id;
     this.route = data.route;
@@ -129,6 +135,7 @@ export class Trip {
     this.descend = data.descend;
     this.time = data.time;
     this.isUsersFavourite = data.isUsersFavourite ?? false;
+    this.isUserOwner = data.isUserOwner ?? false;
     if (data.images) {
       this._newImages = data.images;
     }
@@ -274,9 +281,19 @@ export class Trip {
     searchTrip.id = id;
     searchTrip.userId = userId;
     const searchTripResponse = await searchTrip.search();
-    return searchTripResponse.trips.length === 0
-      ? null
-      : searchTripResponse.trips[0];
+    const foundTrip =
+      searchTripResponse.trips.length === 0
+        ? null
+        : searchTripResponse.trips[0];
+    if (!foundTrip) return null;
+    return TripWeather.getForecastByCoordinates(
+      foundTrip.points.map((point) => {
+        return point.coordinates.coordinates;
+      })
+    ).then((weather) => {
+      foundTrip.tripWeather = weather;
+      return foundTrip;
+    });
   }
 
   static async findAllByOwnerId(
@@ -305,11 +322,20 @@ export class Trip {
 
   static async getFavouriteTripsByUserId(
     userId: string,
-    searchParams: AcceptedTripSearchFilters
+    searchParams: AcceptedTripSearchFilters,
+    loggedUserId?: string
   ) {
     const searchTrip = new SearchTrip();
     searchTrip.favoutitesOfUserId = userId;
+    searchTrip.userId = loggedUserId;
+    searchTrip.id = searchParams.id;
+    searchTrip.withComments = false;
     searchTrip.attributes = searchParams;
+    searchTrip.radius = searchParams.radius;
+    searchTrip.point = searchParams.point;
+    searchTrip.query = searchParams.query;
+    searchTrip.page = searchParams.page;
+    searchTrip.polygonToIntersectId = searchParams.polygonToIntersectId;
     return await searchTrip.search();
   }
 }

@@ -13,5 +13,6 @@ router.get("/get-users-favourite",isAuthTokenValid, tripsController.getUserFavor
 router.post("/add-trip-comment", isAuthTokenValid, tripsController.addTripComment);
 router.post("/edit-trip-comment", isAuthTokenValid, tripsController.editTripComment);
 router.delete("/delete-trip-comment/:id", isAuthTokenValid, tripsController.deleteTripComment);
+router.get("/get-logged-user-trips",isAuthTokenValid, tripsController.getLoggedUserTrips)
 
 export default router;

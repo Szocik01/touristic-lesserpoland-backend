@@ -13,12 +13,15 @@ import {
 } from "../types/api/trips";
 import { ErrorWithStatusCode } from "../types/custom/error";
 import {
-  RequestWithFilterSearchParams,
   RequestWithFilterSearchParamsAndLoggedUser,
+  RequestWithFilterSearchParamsAndOptionalLoggedUser,
   RequestWithLoggedUser,
+  RequestWithOptionalLoggedUser,
 } from "../types/custom/middleware";
 import { Trip } from "../models/trip";
 import TripComment from "../models/tripComment";
+import { SearchTrip } from "../search/searchTrip";
+import { TripWeather } from "../models/tripWeather";
 
 export const findRoute = (
   req: Request<{}, {}, FindRouteBody>,
@@ -196,7 +199,7 @@ export const editTrip = (
 
   Trip.findById(id)
     .then((trip) => {
-      if (trip.tripOwnerId !== userId) {
+      if (trip.tripOwnerId != userId) {
         const error: ErrorWithStatusCode = new Error("Access to trip denied");
         error.statusCode = 403;
         throw error;
@@ -257,7 +260,7 @@ export const getUserFavoriteTrips = (
 ) => {
   const userId = req.userId;
   const searchParams = req.query;
-  Trip.getFavouriteTripsByUserId(userId, searchParams)
+  Trip.getFavouriteTripsByUserId(userId, searchParams, userId)
     .then((searchTripResponse) => {
       res.status(200).json({
         pageCount: searchTripResponse.pageCount,
@@ -357,7 +360,7 @@ export const deleteTripComment = (
       return comment.delete();
     })
     .then((id) => {
-      res.status(200).json({id: id});
+      res.status(200).json({ id: id });
     })
     .catch((error) => {
       if (!error.statusCode) {
@@ -365,4 +368,38 @@ export const deleteTripComment = (
       }
       next(error);
     });
+};
+
+export const getLoggedUserTrips = (
+  req: RequestWithFilterSearchParamsAndLoggedUser,
+  res: Response,
+  next: NextFunction
+) => {
+
+  const userId = req.userId;
+  const searchTrip = new SearchTrip();
+  searchTrip.userId = userId;
+  searchTrip.tripOwnerId = userId;
+  searchTrip.withPoints = true;
+  searchTrip.withComments = false;
+  searchTrip.attributes = req.query;
+  searchTrip.radius = req.query.radius;
+  searchTrip.point = req.query.point;
+  searchTrip.query = req.query.query;
+  searchTrip.page = req.query.page;
+  searchTrip.polygonToIntersectId = req.query.polygonToIntersectId;
+
+  searchTrip.search().then((searchTripData) => {
+    res.status(200).json({
+      pageCount: searchTripData.pageCount,
+      trips: searchTripData.trips.map((trip) => trip.toDTO()),
+    });
+  }).catch((error) => {
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
+  })
+
+
 };
