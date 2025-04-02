@@ -24,7 +24,8 @@ export class PlaceHint {
       point: string;
     }>(
       `
-        SELECT DISTINCT ON (pt.osm_id) pt.osm_id, pt.name, pg.name as city, ST_AsGeoJSON(ST_Transform(pt.way,4326)) as point
+ Select * from (SELECT DISTINCT ON (pt.osm_id) pt.osm_id, pt.name, pg.name as city, ST_AsGeoJSON(ST_Transform(pt.way,4326)) as point, 
+ pt.natural, pt.ele, pt.historic, pt.leisure, pt.tourism, pt.amenity, pt.place
         FROM public.planet_osm_polygon pg 
         JOIN public.planet_osm_point pt 
             ON ST_Intersects(pt.way, pg.way) 
@@ -38,16 +39,20 @@ export class PlaceHint {
               OR pt.historic IS NOT NULL 
               OR pt.leisure IS NOT NULL 
               OR pt.ele IS NOT NULL
+			        OR pt.amenity IS NOT NULL
+			        OR pt.aerialway IS NOT NULL
+			        OR pt.aeroway IS NOT NULL
+			        OR pt.building IS NOT NULL
           ) 
-          AND pt.place IS NULL 
           AND (
               pg.population IS NOT NULL 
               OR pg.place = 'village' 
               OR pg.place = 'town'
+			  OR pg.place = 'hamlet'
           ) 
         ORDER BY 
             pt.osm_id,
-            CASE 
+			      CASE 
                 WHEN pg.name NOT ILIKE 'gmina%' 
                      AND pg.name NOT ILIKE 'województwo%'  
                      AND pg.name NOT ILIKE 'powiat%' THEN 1 
@@ -55,9 +60,19 @@ export class PlaceHint {
                 WHEN pg.name ILIKE 'powiat%' THEN 3 
                 WHEN pg.name ILIKE 'województwo%' THEN 4 
                 ELSE 5 
-            END
-             limit 4
-                `,
+            END)  
+			ORDER BY 
+				CASE 
+	        WHEN "natural" is not null
+					or ele is not null
+					or historic is not null THEN 1
+					WHEN place is not null 
+					or tourism is not null 
+					or leisure is not null THEN 2
+					WHEN amenity is not null THEN 3
+	        ELSE 4
+	      END
+        limit 5`,
       [`${query}%`]
     );
     return response.rows.map(

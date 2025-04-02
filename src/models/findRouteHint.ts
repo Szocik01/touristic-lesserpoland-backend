@@ -52,13 +52,17 @@ FROM
     public.planet_osm_point pt
 WHERE 
     name ILIKE $1 AND ( 
-	'natural' IS NOT NULL 
-      OR tourism IS NOT NULL 
-      OR place IS NOT NULL 
-      OR sport IS NOT NULL 
-      OR historic IS NOT NULL 
-      OR leisure IS NOT NULL 
-      OR ele IS NOT NULL
+              pt.natural IS NOT NULL 
+              OR pt.tourism IS NOT NULL 
+              OR pt.place IS NOT NULL 
+              OR pt.sport IS NOT NULL 
+              OR pt.historic IS NOT NULL 
+              OR pt.leisure IS NOT NULL 
+              OR pt.ele IS NOT NULL
+              OR pt.amenity IS NOT NULL
+              OR pt.aerialway IS NOT NULL
+              OR pt.aeroway IS NOT NULL
+              OR pt.building IS NOT NULL
   ) 
 
 UNION ALL
@@ -69,7 +73,7 @@ SELECT
     ST_AsGeoJSON(ST_Transform(way,4326)) as way,
     'polygon' AS type,
 	CASE 
-        WHEN population IS NOT NULL OR place IN ('village', 'city', 'town') THEN 2 
+        WHEN population IS NOT NULL OR place IN ('village', 'city', 'town', 'hamlet') THEN 2 
         ELSE 3 
     END AS sort_order
 FROM 
