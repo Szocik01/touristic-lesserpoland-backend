@@ -24,7 +24,7 @@ export class PlaceHint {
       point: string;
     }>(
       `
- Select * from (SELECT DISTINCT ON (pt.osm_id) pt.osm_id, pt.name, pg.name as city, ST_AsGeoJSON(ST_Transform(pt.way,4326)) as point, 
+ Select pr.osm_id, pr.name, pr.city, pr.point from (SELECT DISTINCT ON (pt.osm_id) pt.osm_id, pt.name, pg.name as city, ST_AsGeoJSON(ST_Transform(pt.way,4326)) as point, 
  pt.natural, pt.ele, pt.historic, pt.leisure, pt.tourism, pt.amenity, pt.place
         FROM public.planet_osm_polygon pg 
         JOIN public.planet_osm_point pt 
@@ -60,7 +60,7 @@ export class PlaceHint {
                 WHEN pg.name ILIKE 'powiat%' THEN 3 
                 WHEN pg.name ILIKE 'województwo%' THEN 4 
                 ELSE 5 
-            END)  
+            END) pr
 			ORDER BY 
 				CASE 
 	        WHEN "natural" is not null
