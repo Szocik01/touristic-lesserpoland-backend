@@ -18,10 +18,10 @@ export class Trip {
   name: string;
   description: string;
   tripOwnerId: string;
-  ascend: number;
-  descend: number;
-  distance: number;
-  time: number;
+  ascend?: number;
+  descend?: number;
+  distance?: number;
+  time?: number;
   isUsersFavourite: boolean;
   isUserOwner: boolean;
   comments: TripComment[] = [];
@@ -115,10 +115,10 @@ export class Trip {
     tripOwnerId: string;
     images?: { name: string }[];
     points?: Point[];
-    distance: number;
-    ascend: number;
-    descend: number;
-    time: number;
+    distance?: number;
+    ascend?: number;
+    descend?: number;
+    time?: number;
     isUsersFavourite?: boolean;
     isUserOwner?: boolean;
   }) {

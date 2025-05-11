@@ -122,11 +122,7 @@ export const addTrip = (
     !type ||
     !name ||
     !description ||
-    !points ||
-    !ascend ||
-    !descend ||
-    !distance ||
-    !time
+    !points
   ) {
     const error: ErrorWithStatusCode = new Error("Missing required fields");
     error.statusCode = 400;
