@@ -1,3 +1,3 @@
-export const jwtSecretKey = process.env.JWT_SECRET_KEY;
+export const jwtSecretKey = "sdfghjklsjngiushfiuhadfi22qi37893y893gy32vrggfvyue";
 
-export const graphhopperApiSecretKey = process.env.GRAPHHOPPER_SECRET_API_KEY;
+export const graphhopperApiSecretKey = "21dcaa6d-1774-419b-8c81-edbc2c786496";

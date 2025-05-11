@@ -14,14 +14,11 @@ import {
 import { ErrorWithStatusCode } from "../types/custom/error";
 import {
   RequestWithFilterSearchParamsAndLoggedUser,
-  RequestWithFilterSearchParamsAndOptionalLoggedUser,
   RequestWithLoggedUser,
-  RequestWithOptionalLoggedUser,
 } from "../types/custom/middleware";
 import { Trip } from "../models/trip";
 import TripComment from "../models/tripComment";
 import { SearchTrip } from "../search/searchTrip";
-import { TripWeather } from "../models/tripWeather";
 
 export const findRoute = (
   req: Request<{}, {}, FindRouteBody>,

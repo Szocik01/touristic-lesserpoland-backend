@@ -4,15 +4,22 @@ import { PointWeather } from "./pointWeather";
 
 export class TripWeather {
   daily: PointWeather[][];
+  hourly: PointWeather[][];
 
-  constructor(data: { daily: PointWeather[][] }) {
+  constructor(data: { daily: PointWeather[][]; hourly: PointWeather[][] }) {
     this.daily = data.daily;
+    this.hourly = data.hourly;
   }
 
   toDTO() {
     return {
       daily: this.daily.map((pointWeathers) =>
         pointWeathers.map((pointWeather) => pointWeather.toDTO())
+      ),
+      hourly: this.hourly.map((pointWeathers) =>
+        pointWeathers.map((pointWeather) =>
+          pointWeather.toDTO()
+        )
       ),
     };
   }
@@ -31,6 +38,12 @@ export class TripWeather {
         "temperature_2m_max",
         "precipitation_sum",
         "wind_speed_10m_max",
+      ],
+      hourly: [
+        "temperature_2m",
+        "weather_code",
+        "wind_speed_10m",
+        "precipitation",
       ],
       timezone: "Europe/Berlin",
       forecast_days: 3,
@@ -56,7 +69,7 @@ export class TripWeather {
           (time) =>
             new Date((time + pointWeatherData.utcOffsetSeconds()) * 1000)
         );
-        const pointsWeather = dates.map((date, index) => {
+        const pointsWeatherDaily = dates.map((date, index) => {
           return new PointWeather({
             date: date.toLocaleDateString(),
             temperature: temperature2mMax[index],
@@ -65,9 +78,40 @@ export class TripWeather {
             windSpeed: windSpeed10mMax[index],
           });
         });
-        return pointsWeather;
+        return pointsWeatherDaily;
       });
-      return new TripWeather({ daily: weatherForecastForPoints });
+
+      const hourlyWeatherForecastForPoints = response.map((pointWeatherData) => {
+        const hourly = pointWeatherData.hourly();
+        const temperature2m = hourly.variables(0).valuesArray();
+        const weatherCodeHourly = hourly.variables(1).valuesArray();
+        const windSpeed10m = hourly.variables(2).valuesArray();
+        const precipitationHourly = hourly.variables(3).valuesArray();
+        const datesHourly = Array.from(
+          {
+            length:
+              (Number(hourly.timeEnd()) - Number(hourly.time())) /
+              hourly.interval(),
+          },
+          (_, i) => Number(hourly.time()) + i * hourly.interval()
+        ).map(
+          (time) =>
+            new Date((time + pointWeatherData.utcOffsetSeconds()) * 1000)
+        );
+        const pointsWeatherHourly = datesHourly.map((date, index) => {
+          return new PointWeather({
+            date: date.toLocaleDateString(undefined, {month: "numeric", day: "numeric"}),
+            hour: date.toLocaleTimeString(undefined,{timeStyle: "short"}),
+            temperature: temperature2m[index],
+            weatherCode: weatherCodeHourly[index],
+            precipitationSum: precipitationHourly[index],
+            windSpeed: windSpeed10m[index],
+          });
+        });
+        return pointsWeatherHourly;
+      });
+
+      return new TripWeather({ daily: weatherForecastForPoints, hourly: hourlyWeatherForecastForPoints });
     });
   }
 }
